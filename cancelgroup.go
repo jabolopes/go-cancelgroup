@@ -1,8 +1,8 @@
 package cancelgroup
 
 import (
-  "context"
-  "sync"
+	"context"
+	"sync"
 )
 
 // Group is a sync.WaitGroup with support for context cancellation.
@@ -16,53 +16,53 @@ import (
 //
 // This is safe for concurrent use.
 type Group struct {
-  ctx        context.Context
-  cancel     func()
-  cancelOnce sync.Once
-  group      sync.WaitGroup
+	ctx        context.Context
+	cancel     func()
+	cancelOnce sync.Once
+	group      sync.WaitGroup
 }
 
 // Go schedules a new goroutine in this Group if the Group is not cancelled,
 // otherwise this is no-op.
 func (g *Group) Go(f func(context.Context)) *Group {
-  if g.ctx.Err() != nil {
-    return g
-  }
+	if g.ctx.Err() != nil {
+		return g
+	}
 
-  g.group.Add(1)
-  go func() {
-    defer g.group.Done()
-    f(g.ctx)
-  }()
+	g.group.Add(1)
+	go func() {
+		defer g.group.Done()
+		f(g.ctx)
+	}()
 
-  return g
+	return g
 }
 
 // Cancel marks this Group as cancelled. Goroutines that are already scheduled
 // will continue running until they complete. Calling cancel multiple times is
 // safe but has no further effect once the Group is already cancelled.
 func (g *Group) Cancel() *Group {
-  g.cancelOnce.Do(g.cancel)
-  return g
+	g.cancelOnce.Do(g.cancel)
+	return g
 }
 
 // Wait waits for all scheduled goroutines to complete.
 func (g *Group) Wait() *Group {
-  g.group.Wait()
-  return g
+	g.group.Wait()
+	return g
 }
 
 // New creates a new Group. The goroutine context is derived from the given
 // context.
 func New(ctx context.Context) *Group {
-  ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 
-  group := &Group{
-    ctx,
-    cancel,
-    sync.Once{},
-    sync.WaitGroup{},
-  }
+	group := &Group{
+		ctx,
+		cancel,
+		sync.Once{},
+		sync.WaitGroup{},
+	}
 
-  return group
+	return group
 }
