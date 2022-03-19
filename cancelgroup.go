@@ -7,8 +7,8 @@ import (
 
 // Group is a sync.WaitGroup with support for context cancellation.
 //
-// Goroutines can be scheduled on a Group. The scheduled goroutines are a passed
-// a context that is derived from the context passed in the Group's constructor,
+// Goroutines can be scheduled on a Group. The scheduled goroutines are passed a
+// context that is derived from the context passed in the Group's constructor,
 // and which is cancelled when the group is cancelled.
 //
 // Goroutines can be freely scheduled and waited upon. Once the Group is
