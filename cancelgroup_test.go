@@ -10,7 +10,7 @@ import (
 	"github.com/jabolopes/go-cancelgroup"
 )
 
-func ExampleGroup() {
+func ExampleGroup_GroupCancellation() {
 	ctx := context.Background()
 
 	g := cancelgroup.New(ctx)
@@ -20,7 +20,39 @@ func ExampleGroup() {
 
 	time.Sleep(100 * time.Millisecond)
 
+	// Cancel group.
 	g.Cancel()
+
+	// Scheduling goroutines on the already cancelled group is a no-op
+	g.Go(func(ctx context.Context) {
+		fmt.Printf("world")
+	})
+
+	// Wait for active goroutines to finish.
+	g.Wait()
+
+	// Output: hello
+}
+
+func ExampleGroup_ContextCancellation() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	g := cancelgroup.New(ctx)
+	g.Go(func(ctx context.Context) {
+		fmt.Printf("hello")
+	})
+
+	time.Sleep(100 * time.Millisecond)
+
+	// Cancel context.
+	cancel()
+
+	// Scheduling goroutines on the already cancelled group is a no-op
+	g.Go(func(ctx context.Context) {
+		fmt.Printf("world")
+	})
+
+	// Wait for active goroutines to finish.
 	g.Wait()
 
 	// Output: hello
@@ -153,6 +185,23 @@ func TestCancelledGroupDoesNotSchedule(t *testing.T) {
 
 	g := cancelgroup.New(ctx)
 	g.Cancel()
+	g.Go(func(ctx context.Context) {
+		done = true
+	})
+	g.Wait()
+
+	if done {
+		t.Errorf("done = %v; want %v", done, false)
+	}
+}
+
+func TestCancelledContextDoesNotSchedule(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := false
+
+	g := cancelgroup.New(ctx)
+	cancel()
 	g.Go(func(ctx context.Context) {
 		done = true
 	})
